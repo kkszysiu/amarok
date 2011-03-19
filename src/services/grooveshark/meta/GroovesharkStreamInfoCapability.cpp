@@ -37,5 +37,5 @@ GroovesharkStreamInfoCapability::streamName() const
 QString
 GroovesharkStreamInfoCapability::streamSource() const
 {
-    return "last.fm";
+    return "grooveshark";
 }

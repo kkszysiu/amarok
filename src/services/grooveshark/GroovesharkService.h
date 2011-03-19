@@ -21,9 +21,11 @@
 
 #include "../ServiceBase.h"
 
+#include <lib/QGrooveshark.h>
+
 #include <KLineEdit>
 #include <QLabel>
-class ScrobblerAdapter;
+//class ScrobblerAdapter;
 class GroovesharkService;
 
 namespace Collections {
@@ -78,11 +80,17 @@ public:
 
     virtual void polish();
 
-    ScrobblerAdapter *scrobbler() { return m_scrobbler; }
+    //ScrobblerAdapter *scrobbler() { return m_scrobbler; }
+    //QGrooveshark grooveshark() { return m_grooveshark; }
+    QGrooveshark grooveshark;
 
     virtual Collections::Collection * collection();
 
     void love( Meta::TrackPtr track );
+
+public slots:
+    void initLogging();
+    void userAuthenticated();
 
 private slots:
     void love();
@@ -92,7 +100,6 @@ private slots:
     void playCustomStation();
     void updateEditHint( int index );
 
-    void onAuthenticated();
     void onGetUserInfo();
     void onAvatarDownloaded( const QString& username, QPixmap avatar );
 
@@ -101,7 +108,8 @@ private:
 
     bool m_inited;
     bool m_scrobble;
-    ScrobblerAdapter *m_scrobbler;
+    //ScrobblerAdapter *m_scrobbler;
+    QGrooveshark *m_grooveshark;
     Collections::GroovesharkServiceCollection *m_collection;
 
     void playGroovesharkStation( const KUrl &url );

@@ -18,7 +18,6 @@
 #define AMAROK_GROOVESHARKCAPABILITYIMPL_P_H
 
 /*
-#include "core/capabilities/GroovesharkCapability.h"
 
 class GroovesharkCapabilityImpl : public Capabilities::GroovesharkCapability
 {

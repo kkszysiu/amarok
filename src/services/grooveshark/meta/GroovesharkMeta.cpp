@@ -55,6 +55,7 @@ Track::Track( const QString &groovesharkUri )
     , Meta::Track()
     , d( new Private() )
 {
+    qDebug() << "Track::Track liiiiiiiiii";
     d->groovesharkUri = QUrl( groovesharkUri );
     d->t = this;
 
@@ -90,6 +91,7 @@ Track::~Track()
 
 void Track::init( int id /* = -1*/ )
 {
+    qDebug() << "Track::init";
     if( id != -1 )
         d->groovesharkUri = QUrl( "grooveshark://play/tracks/" + QString::number( id ) );
     d->length = 0;
@@ -365,6 +367,7 @@ Track::setTrackInfo( const grooveshark::Track &track )
 QString
 Track::streamName() const
 {
+    debug() << "Track::streamName()";
     // parse the url to get a name if we don't have a track name (ie we're not playing the station)
     // do it as name rather than prettyname so it shows up nice in the playlist.
     QStringList elements = d->groovesharkUri.toString().split( '/', QString::SkipEmptyParts );
@@ -443,6 +446,7 @@ Track::streamName() const
         }
     }
 
+    debug() << d->groovesharkUri.toString();
     return d->groovesharkUri.toString();
 }
 
@@ -476,6 +480,7 @@ Track::skip()
 
 void Track::slotResultReady()
 {
+    debug() << "Track::slotResultReady()";
     /*
     if( d->trackFetch->error() == QNetworkReply::NoError )
     {
@@ -505,6 +510,7 @@ void Track::slotResultReady()
 void
 Track::slotWsReply()
 {
+    debug() << "Track::slotWsReply()";
     if( d->wsReply->error() == QNetworkReply::NoError )
     {
         //debug() << "successfully completed WS transaction";
@@ -517,20 +523,26 @@ Track::slotWsReply()
 bool
 Track::hasCapabilityInterface( Capabilities::Capability::Type type ) const
 {
+    debug() << "Track::hasCapabilityInterface";
     /*
     return type == Capabilities::Capability::Grooveshark
                 || type == Capabilities::Capability::MultiPlayable
                 || type == Capabilities::Capability::SourceInfo
                 || type == Capabilities::Capability::Actions
                 || type == Capabilities::Capability::StreamInfo;
-
     */
+    return type == Capabilities::Capability::MultiPlayable
+                || type == Capabilities::Capability::SourceInfo
+                || type == Capabilities::Capability::Actions
+                || type == Capabilities::Capability::StreamInfo;
+    
     return TRUE;
 }
 
 Capabilities::Capability*
 Track::createCapabilityInterface( Capabilities::Capability::Type type )
 {
+    debug() << "Track::createCapabilityInterface";
     /*
     switch( type )
     {
@@ -548,6 +560,21 @@ Track::createCapabilityInterface( Capabilities::Capability::Type type )
             return 0;
     }
     */
+    switch( type )
+    {
+        //case Capabilities::Capability::Grooveshark:
+        //    return new GroovesharkCapabilityImpl( this );
+        case Capabilities::Capability::MultiPlayable:
+            return new MultiPlayableCapabilityImpl( this );
+        case Capabilities::Capability::SourceInfo:
+            return new ServiceSourceInfoCapability( this );
+        case Capabilities::Capability::Actions:
+            return new Capabilities::ActionsCapability( m_trackActions );
+        case Capabilities::Capability::StreamInfo:
+            return new GroovesharkStreamInfoCapability( this );
+        default:
+            return 0;
+    }
     return 0;
 }
 

@@ -49,6 +49,7 @@
 
 //#include <grooveshark/Audioscrobbler> // from libgrooveshark
 //#include <grooveshark/XmlQuery>
+#include <lib/QGrooveshark.h>
 
 #include <KLocale>
 #include <KPasswordDialog>
@@ -175,7 +176,7 @@ GroovesharkService::GroovesharkService( GroovesharkServiceFactory* parent, const
     : ServiceBase( name, parent, false ),
       m_inited( false),
       m_scrobble( scrobble ),
-      m_scrobbler( 0 ),
+      m_grooveshark( 0 ),
       m_collection( 0 ),
       m_polished( false ),
       m_avatarLabel( 0 ),
@@ -227,51 +228,56 @@ GroovesharkService::init()
 {
     GroovesharkServiceConfig config;
     const QString password = config.password();
-    const QString sessionKey = config.sessionKey();
+    //const QString sessionKey = config.sessionKey();
     // set the global static Grooveshark::Ws stuff
     //grooveshark::ws::ApiKey = Amarok::groovesharkApiKey();
     //grooveshark::ws::SharedSecret = "fe0dcde9fcd14c2d1d50665b646335e9";
     // testing w/ official keys
     //Ws::SharedSecret = "73582dfc9e556d307aead069af110ab8";
     //Ws::ApiKey = "c8c7b163b11f92ef2d33ba6cd3c2c3c3";
-    m_userNameArray = qstrdup( m_userName.toLatin1().data() );
+    //m_userNameArray = qstrdup( m_userName.toLatin1().data() );
     //grooveshark::ws::Username = m_userNameArray;
     //if( grooveshark::nam() != The::networkAccessManager() )
     //    grooveshark::setNetworkAccessManager( The::networkAccessManager() );
 
     //debug() << "username:" << QString( QUrl::toPercentEncoding( grooveshark::ws::Username ) );
 
-    const QString authToken = md5( QString( "%1%2" ).arg( m_userName ).arg( md5( password.toUtf8() ) ).toUtf8() );
+    //const QString authToken = md5( QString( "%1%2" ).arg( m_userName ).arg( md5( password.toUtf8() ) ).toUtf8() );
 
     // now authenticate w/ Grooveshark and get our session key if we don't have one
-    if( sessionKey.isEmpty() )
-    {
-        debug() << "got no saved session key, authenticating with Grooveshark";
-        QMap<QString, QString> query;
-        query[ "method" ] = "auth.getMobileSession";
-        query[ "username" ] = m_userName;
-        query[ "authToken" ] = authToken;
-        //m_jobs[ "auth" ] = grooveshark::ws::post( query );
+//     if( sessionKey.isEmpty() )
+//     {
+//         debug() << "got no saved session key, authenticating with Grooveshark";
+//         QMap<QString, QString> query;
+//         query[ "method" ] = "auth.getMobileSession";
+//         query[ "username" ] = m_userName;
+//         query[ "authToken" ] = authToken;
+//         //m_jobs[ "auth" ] = grooveshark::ws::post( query );
+// 
+//         //connect( m_jobs[ "auth" ], SIGNAL( finished() ), SLOT( onAuthenticated() ) );
+// 
+//     } else
+//     {
+//         debug() << "using saved sessionkey from Grooveshark";
+//         m_sessionKeyArray = qstrdup( sessionKey.toLatin1().data() );
+//         //grooveshark::ws::SessionKey = m_sessionKeyArray;
+//         m_sessionKey = sessionKey;
+// 
+//         //if( m_scrobble )
+//         //    m_scrobbler = new ScrobblerAdapter( this, "ark" );
+//         QMap< QString, QString > params;
+//         params[ "method" ] = "user.getInfo";
+//         //m_jobs[ "getUserInfo" ] = grooveshark::ws::post( params );
+// 
+//         //connect( m_jobs[ "getUserInfo" ], SIGNAL( finished() ), SLOT( onGetUserInfo() ) );
+//     }
 
-        //connect( m_jobs[ "auth" ], SIGNAL( finished() ), SLOT( onAuthenticated() ) );
+    //if( !m_polished )
+    //    polish();
+    grooveshark.startAuth();
 
-    } else
-    {
-        debug() << "using saved sessionkey from Grooveshark";
-        m_sessionKeyArray = qstrdup( sessionKey.toLatin1().data() );
-        //grooveshark::ws::SessionKey = m_sessionKeyArray;
-        m_sessionKey = sessionKey;
-
-        //if( m_scrobble )
-        //    m_scrobbler = new ScrobblerAdapter( this, "ark" );
-        QMap< QString, QString > params;
-        params[ "method" ] = "user.getInfo";
-        //m_jobs[ "getUserInfo" ] = grooveshark::ws::post( params );
-
-        //connect( m_jobs[ "getUserInfo" ], SIGNAL( finished() ), SLOT( onGetUserInfo() ) );
-    }
-
-
+    connect(&grooveshark, SIGNAL(tokenReceived()), SLOT(initLogging()));
+    
     //We have no use for searching currently..
     m_searchWidget->setVisible( false );
 
@@ -306,55 +312,53 @@ GroovesharkService::init()
 
 
 void
-GroovesharkService::onAuthenticated()
+GroovesharkService::initLogging()
 {
-    if( !m_jobs[ "auth" ] )
+    GroovesharkServiceConfig config;
+    const QString password = config.password();
+    
+    grooveshark.authoriseUser(m_userName, password);
+    connect(&grooveshark, SIGNAL(authenticationSucceed()), SLOT(userAuthenticated()));
+}
+
+void
+GroovesharkService::userAuthenticated()
+{
+    GroovesharkServiceConfig config;
+    /*
+    if( lfm.children( "error" ).size() > 0 )
     {
-        debug() << "WARNING: GOT RESULT but no object";
-        return;
+        debug() << "error from authenticating with Grooveshark service:" << lfm.text();
+        config.clearSessionKey();
+        break;
     }
+    m_sessionKey = lfm[ "session" ][ "key" ].text();
+    */
 
-    switch ( m_jobs[ "auth" ]->error() )
-    {
-        case QNetworkReply::NoError:
-        {
-
-            //grooveshark::XmlQuery lfm = grooveshark::XmlQuery( m_jobs[ "auth" ]->readAll() );
-            GroovesharkServiceConfig config;
-            /*
-            if( lfm.children( "error" ).size() > 0 )
-            {
-                debug() << "error from authenticating with Grooveshark service:" << lfm.text();
-                config.clearSessionKey();
-                break;
-            }
-            m_sessionKey = lfm[ "session" ][ "key" ].text();
-            */
-
-            m_sessionKeyArray = qstrdup( m_sessionKey.toLatin1().data() );
-            //grooveshark::ws::SessionKey = m_sessionKeyArray;
-            config.setSessionKey( m_sessionKey );
-            config.save();
-
-            //if( m_scrobble )
-            //    m_scrobbler = new ScrobblerAdapter( this, "ark" );
-            QMap< QString, QString > params;
-            params[ "method" ] = "user.getInfo";
-            //m_jobs[ "getUserInfo" ] = grooveshark::ws::post( params );
-
-            //connect( m_jobs[ "getUserInfo" ], SIGNAL( finished() ), SLOT( onGetUserInfo() ) );
-
-            break;
-        }
-        case QNetworkReply::AuthenticationRequiredError:
-            Amarok::Components::logger()->longMessage( i18nc("Grooveshark: errorMessage", "Either the username was not recognized, or the password was incorrect." ) );
-            break;
-
-        default:
-            Amarok::Components::logger()->longMessage( i18nc("Grooveshark: errorMessage", "There was a problem communicating with the Grooveshark services. Please try again later." ) );
-            break;
-    }
-    m_jobs[ "auth" ]->deleteLater();
+//             m_sessionKeyArray = qstrdup( m_sessionKey.toLatin1().data() );
+//             //grooveshark::ws::SessionKey = m_sessionKeyArray;
+//             config.setSessionKey( m_sessionKey );
+//             config.save();
+// 
+//             //if( m_scrobble )
+//             //    m_scrobbler = new ScrobblerAdapter( this, "ark" );
+//             QMap< QString, QString > params;
+//             params[ "method" ] = "user.getInfo";
+//             //m_jobs[ "getUserInfo" ] = grooveshark::ws::post( params );
+// 
+//             //connect( m_jobs[ "getUserInfo" ], SIGNAL( finished() ), SLOT( onGetUserInfo() ) );
+// 
+//             break;
+//         }
+//         case QNetworkReply::AuthenticationRequiredError:
+//             Amarok::Components::logger()->longMessage( i18nc("Grooveshark: errorMessage", "Either the username was not recognized, or the password was incorrect." ) );
+//             break;
+// 
+//         default:
+//             Amarok::Components::logger()->longMessage( i18nc("Grooveshark: errorMessage", "There was a problem communicating with the Grooveshark services. Please try again later." ) );
+//             break;
+//     }
+//     m_jobs[ "auth" ]->deleteLater();
 }
 
 void
@@ -624,19 +628,30 @@ namespace The
 
 void GroovesharkService::playCustomStation()
 {
+    // 0 - everything
+    // 1 - artists
+    // 2 - albums
+    // 3 - playlists
+    // 4 - users
     DEBUG_BLOCK
     QString text = m_customStationEdit->text();
     QString station;
     debug() << "Selected combo " <<m_customStationCombo->currentIndex();
     switch ( m_customStationCombo->currentIndex() ) {
         case 0:
-            station = "grooveshark://artist/" + text + "/similarartists";
+            station = "grooveshark://everything/" + text;
             break;
         case 1:
-            station = "grooveshark://globaltags/" + text;
+            station = "grooveshark://artists/" + text;
             break;
         case 2:
-            station = "grooveshark://user/" + text + "/personal";
+            station = "grooveshark://albums/" + text;
+            break;
+        case 3:
+            station = "grooveshark://playlists/" + text;
+            break;
+        case 4:
+            station = "grooveshark://users/" + text;
             break;
         default:
             return;
@@ -649,7 +664,9 @@ void GroovesharkService::playCustomStation()
 
 void GroovesharkService::playGroovesharkStation( const KUrl &url )
 {
+    debug() << "Meta::TrackPtr";
     Meta::TrackPtr track = CollectionManager::instance()->trackForUrl( url );
+    debug() << "The::playlistController()";
     The::playlistController()->insertOptioned( track, Playlist::AppendAndPlay );
 }
 

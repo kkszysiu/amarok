@@ -15,7 +15,9 @@ include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}/../.. #for amarokconfig.h
         ${KDE4_INCLUDE_DIR}
         ${STRIGI_INCLUDE_DIR}
+        ${QJSON_INCLUDE_DIR}
         ${QT_INCLUDES}
+        lib
         #${LIBLASTFM_INCLUDE_DIR}/.. # so lastfm/foo/bar.h references work
         #${LIBLASTFM_INCLUDE_DIR}
         )
@@ -27,6 +29,10 @@ include_directories(
         add_definitions(${KDE4_ENABLE_EXCEPTIONS})
 
         set(amarok_service_grooveshark_PART_SRCS
+            lib/QGrooveshark.cpp
+            lib/QGroovesharkPlaylist.cpp
+            lib/QGroovesharkSearch.cpp
+            lib/QGroovesharkSong.cpp
             GroovesharkService.cpp
             GroovesharkServiceCollection.cpp
             GroovesharkServiceConfig.cpp
@@ -55,13 +61,14 @@ include_directories(
             amarokcore
             amaroklib
             amarokpud
-#${LIBLASTFM_LIBRARY}
+            #${LIBLASTFM_LIBRARY}
             ${KDE4_KDECORE_LIBS}
             ${KDE4_KDEUI_LIBS}
             ${KDE4_KIO_LIBS}
             ${KDE4_SOLID_LIBRARY}
             ${KDE4_THREADWEAVER_LIBRARIES}
             ${QT_QTNETWORK_LIBRARY}
+            ${QJSON_LIBRARIES}
         )
 
         install(TARGETS amarok_service_grooveshark DESTINATION ${PLUGIN_INSTALL_DIR} )
