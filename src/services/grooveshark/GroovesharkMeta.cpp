@@ -56,18 +56,23 @@ void GroovesharkMetaFactory::setStreamType(int type)
 
 int GroovesharkMetaFactory::getTrackSqlRowCount()
 {
-   return ServiceMetaFactory::getTrackSqlRowCount() + 2;
+    debug() << "GroovesharkMetaFactory::getTrackSqlRowCount()";
+   //return ServiceMetaFactory::getTrackSqlRowCount() + 2;
+    return 1;
 }
 
 QString GroovesharkMetaFactory::getTrackSqlRows()
 {
-    QString sqlRows = ServiceMetaFactory::getTrackSqlRows();
+    debug() << "GroovesharkMetaFactory::getTrackSqlRows()";
+//     QString sqlRows = ServiceMetaFactory::getTrackSqlRows();
+// 
+//     sqlRows += ", ";
+//     sqlRows += tablePrefix() + "_tracks.preview_lofi, ";
+//     sqlRows += tablePrefix() + "_tracks.preview_ogg ";
+// 
+//     return sqlRows;
 
-    sqlRows += ", ";
-    sqlRows += tablePrefix() + "_tracks.preview_lofi, ";
-    sqlRows += tablePrefix() + "_tracks.preview_ogg ";
-
-    return sqlRows;
+    return "";
 }
 
 TrackPtr GroovesharkMetaFactory::createTrack(const QStringList & rows)
@@ -102,20 +107,24 @@ TrackPtr GroovesharkMetaFactory::createTrack(const QStringList & rows)
 
 int GroovesharkMetaFactory::getAlbumSqlRowCount()
 {
-    return ServiceMetaFactory::getAlbumSqlRowCount() + 3;
+    debug() << "GroovesharkMetaFactory::getAlbumSqlRowCount()";
+    //return ServiceMetaFactory::getAlbumSqlRowCount() + 3;
+    return 2;
 }
 
 QString GroovesharkMetaFactory::getAlbumSqlRows()
 {
-    QString sqlRows = ServiceMetaFactory::getAlbumSqlRows();
+//     QString sqlRows = ServiceMetaFactory::getAlbumSqlRows();
+// 
+//     sqlRows += ", ";
+//     sqlRows += tablePrefix() + "_albums.cover_url, ";
+//     sqlRows += tablePrefix() + "_albums.year, ";
+//     sqlRows += tablePrefix() + "_albums.album_code ";
+// 
+// 
+//     return sqlRows;
 
-    sqlRows += ", ";
-    sqlRows += tablePrefix() + "_albums.cover_url, ";
-    sqlRows += tablePrefix() + "_albums.year, ";
-    sqlRows += tablePrefix() + "_albums.album_code ";
-
-
-    return sqlRows;
+    return "";
 }
 
 AlbumPtr GroovesharkMetaFactory::createAlbum(const QStringList & rows)
@@ -132,18 +141,21 @@ AlbumPtr GroovesharkMetaFactory::createAlbum(const QStringList & rows)
 
 int GroovesharkMetaFactory::getArtistSqlRowCount()
 {
-    return ServiceMetaFactory::getArtistSqlRowCount() + 2;
+    debug() << "GroovesharkMetaFactory::getArtistSqlRowCount()";
+    //return ServiceMetaFactory::getArtistSqlRowCount() + 2;
+    return 3;
 }
 
 QString GroovesharkMetaFactory::getArtistSqlRows()
 {
-    QString sqlRows = ServiceMetaFactory::getArtistSqlRows();
-
-    sqlRows += ", ";
-    sqlRows += tablePrefix() + "_artists.photo_url, ";
-    sqlRows += tablePrefix() + "_artists.artist_page ";
-
-    return sqlRows;
+//     QString sqlRows = ServiceMetaFactory::getArtistSqlRows();
+// 
+//     sqlRows += ", ";
+//     sqlRows += tablePrefix() + "_artists.photo_url, ";
+//     sqlRows += tablePrefix() + "_artists.artist_page ";
+// 
+//     return sqlRows;
+    return "";
 }
 
 ArtistPtr GroovesharkMetaFactory::createArtist(const QStringList & rows)

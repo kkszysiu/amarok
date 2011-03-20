@@ -1,9 +1,10 @@
 #ifndef QGROOVESHARK_SONG_H
 #define QGROOVESHARK_SONG_H
 
-#include "QGrooveshark.h"
+//#include "QGrooveshark.h"
 #include <QObject>
 #include <QString>
+#include <QVariantMap>
 
 class QGroovesharkSong: public QObject
 {
@@ -12,7 +13,7 @@ class QGroovesharkSong: public QObject
 public:
     explicit QGroovesharkSong(QObject *parent = 0);
 
-    QGrooveshark manager;
+    //QGrooveshark manager;
 
     QString songID;
     QString songName;
@@ -30,7 +31,6 @@ public:
     void getStreamDetails();
     void getStreamURL();
     void download();
-
 };
 
 #endif

@@ -8,6 +8,7 @@ include_directories(
     ${KDE4_INCLUDE_DIR}
     ${STRIGI_INCLUDE_DIR}
     ${QT_INCLUDES}
+    ${QJSON_INCLUDE_DIR}
     grooveshark
 )
 
@@ -33,7 +34,7 @@ set(amarok_service_grooveshark_PART_SRCS
     GroovesharkDownloadHandler.cpp
     GroovesharkRedownloadDialog.cpp
     GroovesharkRedownloadHandler.cpp
-    GroovesharkSqlCollection.cpp
+    GroovesharkCollection.cpp
     GroovesharkStore.cpp
     GroovesharkUrlRunner.cpp
     GroovesharkXmlParser.cpp
@@ -56,6 +57,7 @@ target_link_libraries(amarok_service_grooveshark
     ${KDE4_KDEUI_LIBS}
     ${KDE4_KIO_LIBS}
     ${KDE4_THREADWEAVER_LIBRARIES}
+    ${QJSON_LIBRARIES}
 )
 
 
@@ -74,7 +76,7 @@ kde4_add_ui_files( kcm_amarok_service_grooveshark_PART_SRCSS GroovesharkConfigWi
 kde4_add_plugin( kcm_amarok_service_grooveshark ${kcm_amarok_service_grooveshark_PART_SRCSS} )
 
 
-target_link_libraries( kcm_amarok_service_grooveshark  ${KDE4_KUTILS_LIBS} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${KDE4_KDECORE_LIBRARY} ${KDE4_KDEUI_LIBS} )
+target_link_libraries( kcm_amarok_service_grooveshark  ${KDE4_KUTILS_LIBS} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${KDE4_KDECORE_LIBRARY} ${KDE4_KDEUI_LIBS} ${QJSON_LIBRARIES} )
 
 install(TARGETS kcm_amarok_service_grooveshark  DESTINATION ${PLUGIN_INSTALL_DIR})
 

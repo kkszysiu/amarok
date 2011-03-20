@@ -29,12 +29,12 @@
 
 
 K_PLUGIN_FACTORY( GroovesharkSettingsFactory, registerPlugin<GroovesharkSettingsModule>(); )
-K_EXPORT_PLUGIN( GroovesharkSettingsFactory( "kcm_amarok_mp3tunes" ) )
+K_EXPORT_PLUGIN( GroovesharkSettingsFactory( "kcm_amarok_grooveshark" ) )
 
 GroovesharkSettingsModule::GroovesharkSettingsModule( QWidget *parent, const QVariantList &args )
     : KCModule( GroovesharkSettingsFactory::componentData(), parent, args )
 {
-    kDebug( 14310 ) << "Creating Mp3tunes config object";
+    kDebug( 14310 ) << "Creating Grooveshark config object";
 
     QVBoxLayout* l = new QVBoxLayout( this );
     QWidget *w = new QWidget;

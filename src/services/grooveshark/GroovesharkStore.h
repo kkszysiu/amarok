@@ -23,7 +23,9 @@
 #include "GroovesharkRedownloadHandler.h"
 #include "GroovesharkXmlParser.h"
 #include "GroovesharkDatabaseHandler.h"
-#include "GroovesharkSqlCollection.h"
+#include "GroovesharkCollection.h"
+
+#include "grooveshark/QGrooveshark.h"
 
 #include "../ServiceBase.h"
 
@@ -86,7 +88,8 @@ public:
      * Do not do expensive initializations before we are actually shown
      */
     void polish();
-   // bool updateContextView();
+
+    QGrooveshark manager;
 
     virtual Collections::Collection * collection() { return m_collection; }
 
@@ -97,6 +100,19 @@ public slots:
     /**
     * Slot for catching cancelled list downloads
     */
+    void onSearchEntered( const QString &message );
+    void gotUsernameAndPassword();
+
+    void loggedIn();
+    void userAuthenticated();
+    void onSearchResultsReceived(QList<QGroovesharkSong*> songlist);
+
+    void onSearchEverything() { m_searchType = 0; }
+    void onSearchArtists() { m_searchType = 1; }
+    void onSearchAlbums() { m_searchType = 2; }
+    void onSearchPlaylists() { m_searchType = 3; }
+    void onSearchUsers() { m_searchType = 4; }
+
     void listDownloadCancelled();
 
     void download( Meta::GroovesharkTrack * track );
@@ -109,7 +125,9 @@ public slots:
 
     void addToFavorites( const QString &sku );
     void removeFromFavorites( const QString &sku );
-    
+
+    void showSignupDialog();
+
 private slots:
     /**
      * Slot called when the download album button is clicked. Starts a download
@@ -199,16 +217,15 @@ private:
      */
     //void addTrackToPlaylist ( Meta::GroovesharkTrack  *item );
 
-    void showSignupDialog();
-
     static GroovesharkStore *s_instance;
 
     QString m_currentInfoUrl;
     QMenu *m_popupMenu;
+    int m_searchType;
     GroovesharkDownloadHandler *m_downloadHandler;
     GroovesharkRedownloadHandler *m_redownloadHandler;
 
-    QPushButton *m_downloadAlbumButton;
+    QPushButton *m_signIn;
 
     QAction * m_updateAction;
 
@@ -221,7 +238,7 @@ private:
     KIO::StoredTransferJob* m_updateTimestampDownloadJob;
     KIO::StoredTransferJob* m_favoritesJob;
 
-    Collections::GroovesharkSqlCollection * m_collection;
+    Collections::GroovesharkCollection * m_collection;
 
     QString m_tempFileName;
 
@@ -233,7 +250,7 @@ private:
     int m_streamType;
 
     qulonglong m_groovesharkTimestamp;
-    ServiceSqlRegistry * m_registry;
+    //ServiceSqlRegistry * m_registry;
 
     GroovesharkInfoParser * m_groovesharkInfoParser;
 

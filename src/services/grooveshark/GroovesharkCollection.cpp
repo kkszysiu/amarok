@@ -14,22 +14,29 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "GroovesharkSqlCollection.h"
+#include "GroovesharkCollection.h"
 
 #include "core/support/Debug.h"
 #include "GroovesharkCollectionLocation.h"
 #include "GroovesharkMeta.h"
 
+#include "ServiceMetaBase.h"
+
+#include "core-impl/collections/support/MemoryQueryMaker.h"
+
 using namespace Collections;
 
-GroovesharkSqlCollection::GroovesharkSqlCollection(const QString & id, const QString & prettyName, ServiceMetaFactory * metaFactory, ServiceSqlRegistry * registry)
-    : ServiceSqlCollection( id, prettyName, metaFactory, registry )
+GroovesharkCollection::GroovesharkCollection( const QString & prettyName )
+: ServiceCollection( 0, "last.fm", "last.fm" )
+//    : ServiceSqlCollection( id, prettyName, metaFactory, registry )
 {
+    debug() << "GroovesharkCollection::GroovesharkCollection:" << prettyName;
 }
 
-Meta::TrackPtr GroovesharkSqlCollection::trackForUrl(const KUrl & url)
+Meta::TrackPtr GroovesharkCollection::trackForUrl(const KUrl & url)
 {
-    //DEBUG_BLOCK
+    DEBUG_BLOCK
+    debug() << "Meta::TrackPtr GroovesharkCollection::trackForUrl:" << url;
 
     QString pristineUrl = url.url();
 
@@ -54,7 +61,7 @@ Meta::TrackPtr GroovesharkSqlCollection::trackForUrl(const KUrl & url)
 
         //debug() << "after a quick makeover: " << pristineUrl;
 
-        Meta::TrackPtr trackPtr = ServiceSqlCollection::trackForUrl( KUrl( pristineUrl ) );
+        Meta::TrackPtr trackPtr = ServiceCollection::trackForUrl( KUrl( pristineUrl ) );
 
         if ( trackPtr ) {
             Meta::ServiceTrack * mTrack = dynamic_cast< Meta::ServiceTrack * >( trackPtr.data() );
@@ -75,13 +82,13 @@ Meta::TrackPtr GroovesharkSqlCollection::trackForUrl(const KUrl & url)
         pristineUrl.replace( QRegExp( ".*:.*@download" ), "http://he3" );
         pristineUrl.replace( QRegExp( ".*:.*@stream" ), "http://he3" );
 
-        return ServiceSqlCollection::trackForUrl( KUrl( pristineUrl ) );
+        return ServiceCollection::trackForUrl( KUrl( pristineUrl ) );
 
     }
     
 }
 
-CollectionLocation * GroovesharkSqlCollection::location() const
+CollectionLocation * GroovesharkCollection::location() const
 {
     return new GroovesharkCollectionLocation( this );
 }

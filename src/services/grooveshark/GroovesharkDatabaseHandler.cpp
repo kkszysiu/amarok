@@ -32,6 +32,8 @@ GroovesharkDatabaseHandler::~GroovesharkDatabaseHandler()
 void
 GroovesharkDatabaseHandler::createDatabase( )
 {
+    debug() << "GroovesharkDatabaseHandler::createDatabase( )";
+    /*
     //Get database instance
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
 
@@ -111,13 +113,15 @@ GroovesharkDatabaseHandler::createDatabase( )
 
     result = sqlDb->query( queryString );
 
-
+    */
 
 }
 
 void
 GroovesharkDatabaseHandler::destroyDatabase( )
 {
+    debug() << "GroovesharkDatabaseHandler::destroyDatabase( )";
+    /*
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
     QStringList result = sqlDb->query( "DROP TABLE grooveshark_tracks;" );
     result = sqlDb->query( "DROP TABLE grooveshark_albums;" );
@@ -133,7 +137,7 @@ GroovesharkDatabaseHandler::destroyDatabase( )
     result = sqlDb->query( "DROP INDEX grooveshark_artist_name;");
     result = sqlDb->query( "DROP INDEX grooveshark_genre_album_id;");
     result = sqlDb->query( "DROP INDEX grooveshark_genre_name;");
-
+    */
    /* if ( sqlDb->type() == DbConnection::postgresql )
     {
         sqlDb->query( QString( "DROP SEQUENCE grooveshark_track_seq;" ) );
@@ -146,8 +150,10 @@ GroovesharkDatabaseHandler::destroyDatabase( )
 int
 GroovesharkDatabaseHandler::insertTrack( ServiceTrack *track )
 {
+    debug() << "GroovesharkDatabaseHandler::insertTrack";
     GroovesharkTrack * mTrack = static_cast<GroovesharkTrack *> ( track );
 
+    /*
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
     QString queryString = "INSERT INTO grooveshark_tracks ( name, track_number, length, "
             "album_id, artist_id, preview_lofi, preview_ogg, preview_url ) VALUES ( '"
@@ -163,18 +169,19 @@ GroovesharkDatabaseHandler::insertTrack( ServiceTrack *track )
 
     // debug() << "Adding Grooveshark track " << queryString;
     int trackId = sqlDb->insert( queryString, NULL );
-
-    return trackId;
-
+    */
+    //return trackId;
+    return 1;
 
 }
 
 int
 GroovesharkDatabaseHandler::insertAlbum( ServiceAlbum *album )
 {
-
+    debug() << "GroovesharkDatabaseHandler::insertAlbum";
     GroovesharkAlbum * mAlbum = static_cast<GroovesharkAlbum *> ( album );
 
+    /*
     QString queryString;
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
     queryString = "INSERT INTO grooveshark_albums ( name, year, artist_id, "
@@ -189,6 +196,8 @@ GroovesharkDatabaseHandler::insertAlbum( ServiceAlbum *album )
     //debug() << "Adding Grooveshark album " << queryString;
 
     return sqlDb->insert( queryString, 0 );
+    */
+    return 2;
 }
 
 
@@ -196,8 +205,10 @@ GroovesharkDatabaseHandler::insertAlbum( ServiceAlbum *album )
 int
 GroovesharkDatabaseHandler::insertArtist( ServiceArtist *artist )
 {
+    debug() << "GroovesharkDatabaseHandler::insertArtist";
     GroovesharkArtist * mArtist = static_cast<GroovesharkArtist *> ( artist );
 
+    /*
     QString queryString;
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
     queryString = "INSERT INTO grooveshark_artists ( name, artist_page, description, "
@@ -210,99 +221,99 @@ GroovesharkDatabaseHandler::insertArtist( ServiceArtist *artist )
     //debug() << "Adding Grooveshark artist " << queryString;
 
     return sqlDb->insert( queryString, 0 );
+    */
+    return 3;
 }
 
 
 void
 GroovesharkDatabaseHandler::begin( )
 {
-
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-
-    QString queryString = "BEGIN;";
-
-    sqlDb->query( queryString );
+    debug() << "GroovesharkDatabaseHandler::begin";
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+// 
+//     QString queryString = "BEGIN;";
+// 
+//     sqlDb->query( queryString );
 }
 
 void
 GroovesharkDatabaseHandler::commit( )
 {
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-    QString queryString = "COMMIT;";
-
-    sqlDb->query( queryString );
-
+    debug() << "GroovesharkDatabaseHandler::commit";
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+//     QString queryString = "COMMIT;";
+// 
+//     sqlDb->query( queryString );
 }
 
 void GroovesharkDatabaseHandler::insertMoods(int trackId, const QStringList &moods)
 {
-
-    QString queryString;
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-
-    foreach( const QString &mood, moods ) {
-        queryString = "INSERT INTO grooveshark_moods ( track_id, mood ) VALUES ( "
-                      + QString::number( trackId ) + ", '"
-                      + sqlDb->escape( mood ) +  "' );";
-
-
-        //debug() << "Adding Grooveshark mood: " << queryString;
-        sqlDb->insert( queryString, NULL );
-    }
+    debug() << "GroovesharkDatabaseHandler::insertMoods";
+//     QString queryString;
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+// 
+//     foreach( const QString &mood, moods ) {
+//         queryString = "INSERT INTO grooveshark_moods ( track_id, mood ) VALUES ( "
+//                       + QString::number( trackId ) + ", '"
+//                       + sqlDb->escape( mood ) +  "' );";
+// 
+// 
+//         //debug() << "Adding Grooveshark mood: " << queryString;
+//         sqlDb->insert( queryString, NULL );
+//     }
 }
 
 int GroovesharkDatabaseHandler::getArtistIdByExactName(const QString & name)
 {
-
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-
-    QString queryString = "SELECT id from grooveshark_artists WHERE name='" + sqlDb->escape( name ) + "';";
-    QStringList result = sqlDb->query( queryString );
-
-    //debug() << "Looking for id of artist " << name << ":";
-
-    if ( result.size() < 1 ) return -1;
-    int artistId = result.first().toInt();
-
-    //debug() << "    Found: " << QString::number( artistId ) << ":";
-
-    return artistId;
-
+    debug() << "GroovesharkDatabaseHandler::getArtistIdByExactName:" << name;
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+// 
+//     QString queryString = "SELECT id from grooveshark_artists WHERE name='" + sqlDb->escape( name ) + "';";
+//     QStringList result = sqlDb->query( queryString );
+// 
+//     //debug() << "Looking for id of artist " << name << ":";
+// 
+//     if ( result.size() < 1 ) return -1;
+//     int artistId = result.first().toInt();
+// 
+//     //debug() << "    Found: " << QString::number( artistId ) << ":";
+// 
+//     return artistId;
+    return 5;
 }
 
 int GroovesharkDatabaseHandler::getAlbumIdByAlbumCode(const QString & albumcode)
 {
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-
-    QString queryString = "SELECT id from grooveshark_albums WHERE album_code='" + sqlDb->escape( albumcode ) + "';";
-    QStringList result = sqlDb->query( queryString );
-
-    //debug() << "Looking for id of album " << albumcode << ":";
-
-    if ( result.size() < 1 ) return -1;
-    int albumId = result.first().toInt();
-
-    //debug() << "  Found: " << QString::number( albumId ) << ":";
-
-    return albumId;
+    debug() << "GroovesharkDatabaseHandler::getAlbumIdByAlbumCode:" << albumcode;
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+// 
+//     QString queryString = "SELECT id from grooveshark_albums WHERE album_code='" + sqlDb->escape( albumcode ) + "';";
+//     QStringList result = sqlDb->query( queryString );
+// 
+//     //debug() << "Looking for id of album " << albumcode << ":";
+// 
+//     if ( result.size() < 1 ) return -1;
+//     int albumId = result.first().toInt();
+// 
+//     //debug() << "  Found: " << QString::number( albumId ) << ":";
+// 
+//     return albumId;
+    return 6;
 }
 
 int GroovesharkDatabaseHandler::insertGenre(ServiceGenre * genre)
 {
-    QString queryString;
-    SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-    queryString = "INSERT INTO grooveshark_genre ( album_id, name "
-                  ") VALUES ( "
-                  + QString::number ( genre->albumId() ) + ", '"
-                  + sqlDb->escape( genre->name() ) + "' );";
-
-    //debug() << "Adding Jamendo genre " << queryString;
-
-    return sqlDb->insert( queryString, 0 );
+    debug() << "GroovesharkDatabaseHandler::insertGenre";
+//     QString queryString;
+//     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
+//     queryString = "INSERT INTO grooveshark_genre ( album_id, name "
+//                   ") VALUES ( "
+//                   + QString::number ( genre->albumId() ) + ", '"
+//                   + sqlDb->escape( genre->name() ) + "' );";
+// 
+//     //debug() << "Adding Jamendo genre " << queryString;
+// 
+//     return sqlDb->insert( queryString, 0 );
+    return 7;
 }
-
-
-
-
-
-

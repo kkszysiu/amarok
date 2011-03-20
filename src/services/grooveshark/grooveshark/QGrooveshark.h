@@ -5,7 +5,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QVariantMap>
+#include <QList>
 
+#include "QGroovesharkSong.h"
 //namespace QGrooveshark {
 
 class QGrooveshark: public QObject
@@ -52,6 +54,7 @@ signals:
     void tokenReceived();
     void authenticationSucceed();
     void authenticationFailed(const QString &message);
+    void onSearchResultsReceived(QList<QGroovesharkSong*> songlist);
 };
 
 //}

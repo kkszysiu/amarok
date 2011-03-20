@@ -29,19 +29,20 @@
 #include "browsers/InfoProxy.h"
 #include "GroovesharkUrlRunner.h"
 
-#include "ui_GroovesharkSignupDialogBase.h"
-
 #include "../ServiceSqlRegistry.h"
 #include "core-impl/collections/support/CollectionManager.h"
 #include "core/support/Debug.h"
 #include "playlist/PlaylistModelStack.h"
 #include "widgets/SearchWidget.h"
 
+#include "grooveshark/QGroovesharkSearch.h"
+
 #include <KAction>
 #include <KMenuBar>
 #include <KStandardDirs>  //locate()
 #include <KTemporaryFile>
 #include <KUrl>
+#include <KPasswordDialog>
 #include <threadweaver/ThreadWeaver.h>
 
 #include <QDateTime>
@@ -95,18 +96,17 @@ GroovesharkStore::GroovesharkStore( GroovesharkServiceFactory* parent, const cha
         , m_currentAlbum( 0 )
         , m_streamType( GroovesharkMetaFactory::OGG )
         , m_groovesharkTimestamp( 0 )
-        , m_registry( 0 )
         , m_signupInfoWidget( 0 )
 {
     setObjectName(name);
     DEBUG_BLOCK
     //initTopPanel( );
 
-    setShortDescription( i18n( "\"Fair trade\" online music store." ) );
+    setShortDescription( i18n( "Online music streaming platform" ) );
     setIcon( KIcon( "view-services-grooveshark-amarok" ) );
 
     // xgettext: no-c-format
-    setLongDescription( i18n( "Grooveshark.com is a different kind of record company with the motto \"We are not evil!\" 50% of every purchase goes directly to the artist and if you purchase an album through Amarok, the Amarok project receives a 10% commission. Grooveshark.com also offers \"all you can eat\" memberships that lets you download as much of their music as you like." ) );
+    setLongDescription( i18n( "Some nice description TODO" ) );
     setImagePath( KStandardDirs::locate( "data", "amarok/images/hover_info_grooveshark.png" ) );
 
 
@@ -130,20 +130,39 @@ GroovesharkStore::GroovesharkStore( GroovesharkServiceFactory* parent, const cha
     setStreamType( config.streamType() );
 
     metaFactory->setStreamType( m_streamType );
-    m_registry = new ServiceSqlRegistry( metaFactory );
-    m_collection = new Collections::GroovesharkSqlCollection( "grooveshark", "Grooveshark.com", metaFactory, m_registry );
+    //m_registry = new ServiceSqlRegistry( metaFactory );
+    m_collection = new Collections::GroovesharkCollection( "Grooveshark.com" );
     m_serviceready = true;
     CollectionManager::instance()->addUnmanagedCollection( m_collection, CollectionManager::CollectionDisabled );
+    connect(&manager, SIGNAL(tokenReceived()), SLOT(loggedIn()));
+    connect(&manager, SIGNAL(authenticationSucceed()), SLOT(userAuthenticated()));
+    connect(&manager, SIGNAL(onSearchResultsReceived(QList<QGroovesharkSong*>)), SLOT(onSearchResultsReceived(QList<QGroovesharkSong*>)));
     emit( ready() );
 }
 
 GroovesharkStore::~GroovesharkStore()
 {
     CollectionManager::instance()->removeUnmanagedCollection( m_collection );
-    delete m_registry;
-    delete m_collection;
+    //delete m_registry;
+    //delete m_collection;
 }
 
+void GroovesharkStore::loggedIn()
+{
+    GroovesharkConfig config;
+    manager.authoriseUser(config.username(), config.password());
+}
+
+void GroovesharkStore::userAuthenticated()
+{
+    m_searchWidget->setVisible(true);
+}
+
+void GroovesharkStore::onSearchResultsReceived(QList<QGroovesharkSong*> songlist) {
+    m_searchWidget->setVisible(true);
+    //debug() << "songlist:" << songlist;
+    // TODO: do some cool stuff with songs, list them in the treeview :)
+}
 
 void GroovesharkStore::download( )
 {
@@ -164,7 +183,7 @@ void GroovesharkStore::download( )
     }
 
     m_downloadInProgress = true;
-    m_downloadAlbumButton->setEnabled( false );
+    //m_downloadAlbumButton->setEnabled( false );
 
     if ( !m_downloadHandler )
     {
@@ -196,7 +215,7 @@ void GroovesharkStore::download( Meta::GroovesharkAlbum * album )
         polish();
 
     m_downloadInProgress = true;
-    m_downloadAlbumButton->setEnabled( false );
+    //m_downloadAlbumButton->setEnabled( false );
 
     if ( !m_downloadHandler )
     {
@@ -211,25 +230,24 @@ void GroovesharkStore::download( Meta::GroovesharkAlbum * album )
 
 void GroovesharkStore::initTopPanel( )
 {
-
     QMenu *filterMenu = new QMenu( 0 );
 
-    QAction *action = filterMenu->addAction( i18n("Artist") );
-    connect( action, SIGNAL( triggered( bool ) ), SLOT( sortByArtist() ) );
+    QAction *action = filterMenu->addAction( i18n("Everything") );
+    connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchEverything() ) );
 
-    action = filterMenu->addAction( i18n( "Artist / Album" ) );
-    connect( action, SIGNAL( triggered( bool ) ), SLOT( sortByArtistAlbum() ) );
+    action = filterMenu->addAction( i18n( "Artists" ) );
+    connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchArtists() ) );
 
-    action = filterMenu->addAction( i18n( "Album" ) ) ;
-    connect( action, SIGNAL( triggered( bool ) ), SLOT( sortByAlbum() ) );
+    action = filterMenu->addAction( i18n( "Albums" ) ) ;
+    connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchAlbums() ) );
 
-    action = filterMenu->addAction( i18n( "Genre / Artist" ) );
-    connect( action, SIGNAL( triggered( bool ) ), SLOT( sortByGenreArtist() ) );
+    action = filterMenu->addAction( i18n( "Playlists" ) );
+    connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchPlaylists() ) );
 
-    action = filterMenu->addAction( i18n( "Genre / Artist / Album" ) );
-    connect( action, SIGNAL( triggered( bool ) ), SLOT( sortByGenreArtistAlbum() ) );
+    action = filterMenu->addAction( i18n( "Users" ) );
+    connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchUsers() ) );
 
-    KAction *filterMenuAction = new KAction( KIcon( "preferences-other" ), i18n( "Sort Options" ), this );
+    KAction *filterMenuAction = new KAction( KIcon( "preferences-other" ), i18n( "Search Options" ), this );
     filterMenuAction->setMenu( filterMenu );
 
     m_searchWidget->toolBar()->addSeparator();
@@ -239,6 +257,7 @@ void GroovesharkStore::initTopPanel( )
     if( tbutton )
         tbutton->setPopupMode( QToolButton::InstantPopup );
 
+    /*
     QMenu * actionsMenu = new QMenu( 0 );
 
     action = actionsMenu->addAction( i18n( "Re-download" ) );
@@ -251,39 +270,38 @@ void GroovesharkStore::initTopPanel( )
     actionsMenuAction->setMenu( actionsMenu );
 
     m_searchWidget->toolBar()->addAction( actionsMenuAction );
-
+    
     tbutton = qobject_cast<QToolButton*>( m_searchWidget->toolBar()->widgetForAction( actionsMenuAction ) );
     if( tbutton )
         tbutton->setPopupMode( QToolButton::InstantPopup );
+    */
 
+    m_searchType = 0;
+
+    connect(m_searchWidget->comboBox(), SIGNAL( returnPressed(QString) ), SLOT( onSearchEntered(QString) ) );
+    m_searchWidget->setVisible(false);
 }
 
 void GroovesharkStore::initBottomPanel()
 {
-    //m_bottomPanel->setMaximumHeight( 24 );
 
-    m_downloadAlbumButton = new QPushButton;
-    m_downloadAlbumButton->setParent( m_bottomPanel );
+    m_signIn = new QPushButton;
+    m_signIn->setParent( m_bottomPanel );
 
     GroovesharkConfig config;
-    if ( config.isMember() && config.membershipType() == GroovesharkConfig::DOWNLOAD )
-    {
-        m_downloadAlbumButton->setText( i18n( "Download Album" ) );
-        m_downloadAlbumButton->setEnabled( false );
-    }
-    else if ( config.isMember() )
-        m_downloadAlbumButton->hide();
-    else
-    {
-        m_downloadAlbumButton->setText( i18n( "Signup" ) );
-        m_downloadAlbumButton->setEnabled( true );
+
+    if( config.password().isEmpty() || config.username().isEmpty() ) {
+        m_signIn->setText( i18n( "Signin" ) );
+        m_signIn->setEnabled( true );
+    } else {
+        m_signIn->hide();
+        manager.startAuth();
     }
 
-    m_downloadAlbumButton->setObjectName( "downloadButton" );
-    m_downloadAlbumButton->setIcon( KIcon( "download-amarok" ) );
-    
+    m_signIn->setObjectName( "downloadButton" );
+    m_signIn->setIcon( KIcon( "download-amarok" ) );
 
-    connect( m_downloadAlbumButton, SIGNAL( clicked() ) , this, SLOT( download() ) );
+    connect( m_signIn, SIGNAL( clicked() ), this, SLOT( showSignupDialog() ) );
 }
 
 
@@ -294,6 +312,15 @@ void GroovesharkStore::updateButtonClicked()
     updateGroovesharkList();
 }
 
+void GroovesharkStore::onSearchEntered(const QString &text) {
+    debug() << "onSearchEntered text:" << text << " type: " << m_searchType;
+    
+    QGroovesharkSearch searchmanager;
+    searchmanager.searchResults(manager, text);
+
+    // TODO: make cool loader of something
+    m_searchWidget->hide();
+}
 
 bool GroovesharkStore::updateGroovesharkList()
 {
@@ -399,7 +426,6 @@ void GroovesharkStore::downloadCompleted( bool )
     delete m_downloadHandler;
     m_downloadHandler = 0;
 
-    m_downloadAlbumButton->setEnabled( true );
     m_downloadInProgress = false;
 
     debug() << "Purchase operation complete";
@@ -425,18 +451,15 @@ void GroovesharkStore::itemSelected( CollectionTreeItem * selectedItem )
         debug() << "is right type (track)";
         Meta::GroovesharkTrack * track = static_cast<Meta::GroovesharkTrack *> ( dataPtr.data() );
         m_currentAlbum = static_cast<Meta::GroovesharkAlbum *> ( track->album().data() );
-        m_downloadAlbumButton->setEnabled( true );
 
     } else if ( typeid( * dataPtr.data() ) == typeid( Meta::GroovesharkAlbum ) ) {
 
         m_currentAlbum = static_cast<Meta::GroovesharkAlbum *> ( dataPtr.data() );
         debug() << "is right type (album) named " << m_currentAlbum->name();
 
-        m_downloadAlbumButton->setEnabled( true );
     } else {
 
         debug() << "is wrong type";
-        m_downloadAlbumButton->setEnabled( false );
 
     }
 }
@@ -444,11 +467,11 @@ void GroovesharkStore::itemSelected( CollectionTreeItem * selectedItem )
 
 void GroovesharkStore::addMoodyTracksToPlaylist( const QString &mood, int count )
 {
-    GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
-    databaseWorker->fetchTrackswithMood( mood, count, m_registry );
-    connect( databaseWorker, SIGNAL( gotMoodyTracks( Meta::TrackList ) ), this, SLOT( moodyTracksReady(Meta::TrackList ) ) );
+    //GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
+    //databaseWorker->fetchTrackswithMood( mood, count, m_registry );
+    //connect( databaseWorker, SIGNAL( gotMoodyTracks( Meta::TrackList ) ), this, SLOT( moodyTracksReady(Meta::TrackList ) ) );
 
-    ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
+    //ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
 }
 
 
@@ -468,12 +491,16 @@ void GroovesharkStore::polish()
         m_groovesharkInfoParser = new GroovesharkInfoParser();
 
         setInfoParser( m_groovesharkInfoParser );
+
+        debug() << "Starting strange colelctions stuff";
+        debug() << "m_collection:" << m_collection;
+        debug() << "levels:" << levels;
+
         setModel( new SingleCollectionTreeItemModel( m_collection, levels ) );
 
         connect( m_contentView, SIGNAL( itemSelected( CollectionTreeItem * ) ), this, SLOT( itemSelected( CollectionTreeItem * ) ) );
 
         //add a custom url runner
-
         GroovesharkUrlRunner * runner = new GroovesharkUrlRunner();
 
         connect( runner, SIGNAL( showFavorites() ), this, SLOT( showFavoritesPage() ) );
@@ -488,16 +515,16 @@ void GroovesharkStore::polish()
     const KUrl url( KStandardDirs::locate( "data", "amarok/data/" ) );
     QString imagePath = url.url();
 
-    GroovesharkInfoParser * parser = dynamic_cast<GroovesharkInfoParser *> ( infoParser() );
-    if ( parser )
-        parser->getFrontPage();
+    //GroovesharkInfoParser * parser = dynamic_cast<GroovesharkInfoParser *> ( infoParser() );
+    //if ( parser )
+    //    parser->getFrontPage();
 
     //get a mood map we can show to the cloud view
 
-    GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
-    databaseWorker->fetchMoodMap();
-    connect( databaseWorker, SIGNAL( gotMoodMap(QMap< QString, int >) ), this, SLOT( moodMapReady(QMap< QString, int >) ) );
-    ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
+    //GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
+    //databaseWorker->fetchMoodMap();
+    //connect( databaseWorker, SIGNAL( gotMoodMap(QMap< QString, int >) ), this, SLOT( moodMapReady(QMap< QString, int >) ) );
+    //ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
 
     checkForUpdates();
 }
@@ -598,15 +625,15 @@ void GroovesharkStore::downloadCurrentTrackAlbum()
 
 void GroovesharkStore::checkForUpdates()
 {
-    m_updateTimestampDownloadJob = KIO::storedGet( KUrl( "http://grooveshark.com/info/last_update_timestamp" ), KIO::Reload, KIO::HideProgressInfo );
-    connect( m_updateTimestampDownloadJob, SIGNAL( result( KJob * ) ), SLOT( timestampDownloadComplete( KJob *  ) ) );
+//     m_updateTimestampDownloadJob = KIO::storedGet( KUrl( "http://grooveshark.com/info/last_update_timestamp" ), KIO::Reload, KIO::HideProgressInfo );
+//     connect( m_updateTimestampDownloadJob, SIGNAL( result( KJob * ) ), SLOT( timestampDownloadComplete( KJob *  ) ) );
 }
 
 
 void GroovesharkStore::timestampDownloadComplete( KJob *  job )
 {
     DEBUG_BLOCK
-
+/*
     if ( !job->error() == 0 )
     {
         //TODO: error handling here
@@ -630,7 +657,7 @@ void GroovesharkStore::timestampDownloadComplete( KJob *  job )
     if ( ok && groovesharkTimestamp > localTimestamp ) {
         m_groovesharkTimestamp = groovesharkTimestamp;
         updateButtonClicked();
-    }
+    }*/
 }
 
 
@@ -701,11 +728,11 @@ void GroovesharkStore::download( const QString &sku )
 {
     DEBUG_BLOCK
     debug() << "sku: " << sku;
-    GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
-    databaseWorker->fetchAlbumBySku( sku, m_registry );
-    connect( databaseWorker, SIGNAL( gotAlbumBySku( Meta::GroovesharkAlbum * ) ), this, SLOT( download( Meta::GroovesharkAlbum * ) ) );
+    //GroovesharkDatabaseWorker * databaseWorker = new GroovesharkDatabaseWorker();
+    //databaseWorker->fetchAlbumBySku( sku, m_registry );
+    //connect( databaseWorker, SIGNAL( gotAlbumBySku( Meta::GroovesharkAlbum * ) ), this, SLOT( download( Meta::GroovesharkAlbum * ) ) );
 
-    ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
+    //ThreadWeaver::Weaver::instance()->enqueue( databaseWorker );
 }
 
 void GroovesharkStore::addToFavorites( const QString &sku )
@@ -758,17 +785,29 @@ void GroovesharkStore::favoritesResult( KJob* addToFavoritesJob )
 void
 GroovesharkStore::showSignupDialog()
 {
+    QString m_userName;
+    KPasswordDialog dlg( 0 , KPasswordDialog::ShowUsernameLine );
+    dlg.setPrompt( i18n( "Enter login information for Grooveshark" ) );
+    if( !dlg.exec() )
+        return; //the user canceled
 
-    if ( m_signupInfoWidget== 0 )
-    {
-        m_signupInfoWidget = new QDialog;
-        Ui::SignupDialog ui;
-        ui.setupUi( m_signupInfoWidget );
-    }
+    m_userName = dlg.username();
+    const QString password = dlg.password();
+    if( password.isEmpty() || m_userName.isEmpty() )
+        return; // We can't create the service if we don't get the details..
+    GroovesharkConfig config;
+    config.setPassword( password );
+    config.setUsername( m_userName );
+    config.save();
 
-     m_signupInfoWidget->show();
+    connect(&dlg, SIGNAL( gotUsernameAndPassword() ), SLOT( gotUsernameAndPassword() ) );
 }
 
+void GroovesharkStore::gotUsernameAndPassword() {
+    m_signIn->hide();
+    manager.startAuth();
+    m_searchWidget->setVisible(true);
+}
 
 
 #include "GroovesharkStore.moc"

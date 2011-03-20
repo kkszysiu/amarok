@@ -36,6 +36,7 @@ void
 GroovesharkDatabaseWorker::run()
 {
     DEBUG_BLOCK
+    debug() << "GroovesharkDatabaseWorker::run()";
     switch ( m_task ) {
         case FETCH_MODS:
             doFetchMoodMap();
@@ -54,6 +55,7 @@ GroovesharkDatabaseWorker::run()
 void GroovesharkDatabaseWorker::completeJob()
 {
     DEBUG_BLOCK
+    debug() << "GroovesharkDatabaseWorker::completeJob()";
     switch ( m_task ) {
         case FETCH_MODS:
             emit( gotMoodMap( m_moodMap ) );
@@ -101,6 +103,7 @@ void GroovesharkDatabaseWorker::fetchAlbumBySku( const QString & sku, ServiceSql
 
 void GroovesharkDatabaseWorker::doFetchMoodMap()
 {
+    /*
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
     QString queryString = "select count( mood ), mood from grooveshark_moods GROUP BY mood;";
     debug() << "Querying for moods: " << queryString;
@@ -112,14 +115,16 @@ void GroovesharkDatabaseWorker::doFetchMoodMap()
         QString string =  result.takeFirst();
         m_moodMap.insert( string, count );
     }
+    */
+    debug() << "GroovesharkDatabaseWorker::doFetchMoodMap()";
 
 }
 
 void GroovesharkDatabaseWorker::doFetchTrackswithMood()
 {
+    debug() << "GroovesharkDatabaseWorker::doFetchTrackswithMood";
+    /*
     SqlStorage *sqlDb = CollectionManager::instance()->sqlStorage();
-
-
 
     //ok, a huge join turned out to be _really_ slow, so lets chop up the query a bit...
 
@@ -165,13 +170,15 @@ void GroovesharkDatabaseWorker::doFetchTrackswithMood()
             m_moodyTracks.append( trackptr );
         }
     }
+    */
 
 }
 
 void GroovesharkDatabaseWorker::doFetchAlbumBySku()
 {
     DEBUG_BLOCK
-
+    debug() << "GroovesharkDatabaseWorker::doFetchAlbumBySku()";
+    /*
     ServiceMetaFactory * metaFactory = m_registry->factory();
 
     QString rows = metaFactory->getAlbumSqlRows()
@@ -196,6 +203,7 @@ void GroovesharkDatabaseWorker::doFetchAlbumBySku()
     {
         m_album = 0;
     }
+    */
 }
 
 #include "GroovesharkDatabaseWorker.moc"

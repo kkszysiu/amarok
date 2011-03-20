@@ -14,10 +14,10 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
  
-#ifndef GROOVESHARKSQLCOLLECTION_H
-#define GROOVESHARKSQLCOLLECTION_H
+#ifndef GROOVESHARKCOLLECTION_H
+#define GROOVESHARKCOLLECTION_H
 
-#include "../ServiceSqlCollection.h"
+#include <ServiceCollection.h>
 
 namespace Collections {
 
@@ -26,11 +26,11 @@ A simple ServiceSqlCollection subclass for providing a grooveshark membership sp
 
 	@author Nikolaj Hald Nielsen <nhn@kde.org>
 */
-class GroovesharkSqlCollection : public ServiceSqlCollection
+class GroovesharkCollection : public ServiceCollection
 {
 public:
 
-    GroovesharkSqlCollection( const QString &id, const QString &prettyName, ServiceMetaFactory * metaFactory, ServiceSqlRegistry * registry );
+    GroovesharkCollection( const QString &prettyName );
     
     virtual Meta::TrackPtr trackForUrl( const KUrl &url );
 

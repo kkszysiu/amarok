@@ -23,7 +23,7 @@
 
 using namespace Collections;
 
-GroovesharkCollectionLocation::GroovesharkCollectionLocation( GroovesharkSqlCollection const *parentCollection )
+GroovesharkCollectionLocation::GroovesharkCollectionLocation( GroovesharkCollection const *parentCollection )
     : ServiceCollectionLocation( parentCollection )
 {
 }

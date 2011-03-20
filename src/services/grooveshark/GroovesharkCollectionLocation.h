@@ -17,7 +17,7 @@
 #ifndef GROOVESHARKCOLLECTIONLOCATION_H
 #define GROOVESHARKCOLLECTIONLOCATION_H
 
-#include "GroovesharkSqlCollection.h"
+#include "GroovesharkCollection.h"
 #include "ServiceCollectionLocation.h"
 
 namespace Collections {
@@ -30,7 +30,7 @@ A ServiceCollectionLocation subclass responsible for showing a small Grooveshark
 class GroovesharkCollectionLocation : public ServiceCollectionLocation
 {
 public:
-    GroovesharkCollectionLocation( GroovesharkSqlCollection const *parentCollection );
+    GroovesharkCollectionLocation( GroovesharkCollection const *parentCollection );
 
     virtual ~GroovesharkCollectionLocation();
 
