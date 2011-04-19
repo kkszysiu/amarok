@@ -36,6 +36,12 @@ set(amarok_service_grooveshark_PART_SRCS
     GroovesharkRedownloadHandler.cpp
     GroovesharkCollection.cpp
     GroovesharkStore.cpp
+    GroovesharkServiceModel.cpp
+    GroovesharkServiceView.cpp
+    GroovesharkTreeItem.cpp
+    GroovesharkPodcastTreeItem.cpp
+    GroovesharkTagTreeItem.cpp
+    GroovesharkSortFilterProxyModel.cpp
     GroovesharkUrlRunner.cpp
     GroovesharkXmlParser.cpp
 

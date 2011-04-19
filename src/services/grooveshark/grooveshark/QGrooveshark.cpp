@@ -236,7 +236,7 @@ void QGrooveshark::downloadFinished(QNetworkReply *reply)
             qWarning() << "Data is not valid";
         }
 
-    } else if ( url == QUrl(getHomeURL()) ) {                               // homepage
+    } else if (  url == QUrl(getHomeURL()) ) {                               // homepage
         QRegExp rx("PHPSESSID=([A-Za-z_0-9]*)");
         int pos = rx.indexIn(reply->rawHeader("Set-Cookie"));
         if (pos > -1) {

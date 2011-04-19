@@ -28,6 +28,9 @@
 #include "GroovesharkInfoParser.h"
 #include "browsers/InfoProxy.h"
 #include "GroovesharkUrlRunner.h"
+#include "GroovesharkServiceView.h"
+#include "GroovesharkServiceModel.h"
+#include "GroovesharkSortFilterProxyModel.h"
 
 #include "../ServiceSqlRegistry.h"
 #include "core-impl/collections/support/CollectionManager.h"
@@ -156,6 +159,9 @@ void GroovesharkStore::loggedIn()
 void GroovesharkStore::userAuthenticated()
 {
     m_searchWidget->setVisible(true);
+
+    if ( !m_polished )
+        polish();
 }
 
 void GroovesharkStore::onSearchResultsReceived(QList<QGroovesharkSong*> songlist) {
@@ -247,6 +253,16 @@ void GroovesharkStore::initTopPanel( )
     action = filterMenu->addAction( i18n( "Users" ) );
     connect( action, SIGNAL( triggered( bool ) ), SLOT( onSearchUsers() ) );
 
+    filterMenu->addSeparator();
+
+    action = filterMenu->addAction( i18n( "My Playlists" ) );
+    action = filterMenu->addAction( i18n( "Favourites" ) );
+
+    filterMenu->addSeparator();
+
+    action = filterMenu->addAction( i18n( "Popular" ) );
+    action = filterMenu->addAction( i18n( "Stations" ) );
+
     KAction *filterMenuAction = new KAction( KIcon( "preferences-other" ), i18n( "Search Options" ), this );
     filterMenuAction->setMenu( filterMenu );
 
@@ -256,25 +272,6 @@ void GroovesharkStore::initTopPanel( )
     QToolButton *tbutton = qobject_cast<QToolButton*>( m_searchWidget->toolBar()->widgetForAction( filterMenuAction ) );
     if( tbutton )
         tbutton->setPopupMode( QToolButton::InstantPopup );
-
-    /*
-    QMenu * actionsMenu = new QMenu( 0 );
-
-    action = actionsMenu->addAction( i18n( "Re-download" ) );
-    connect( action, SIGNAL( triggered( bool) ), SLOT( processRedownload() ) );
-
-    m_updateAction = actionsMenu->addAction( i18n( "Update Database" ) );
-    connect( m_updateAction, SIGNAL( triggered( bool) ), SLOT( updateButtonClicked() ) );
-
-    KAction *actionsMenuAction = new KAction( KIcon( "list-add" ), i18n( "Tools" ), this );
-    actionsMenuAction->setMenu( actionsMenu );
-
-    m_searchWidget->toolBar()->addAction( actionsMenuAction );
-    
-    tbutton = qobject_cast<QToolButton*>( m_searchWidget->toolBar()->widgetForAction( actionsMenuAction ) );
-    if( tbutton )
-        tbutton->setPopupMode( QToolButton::InstantPopup );
-    */
 
     m_searchType = 0;
 
@@ -291,7 +288,7 @@ void GroovesharkStore::initBottomPanel()
     GroovesharkConfig config;
 
     if( config.password().isEmpty() || config.username().isEmpty() ) {
-        m_signIn->setText( i18n( "Signin" ) );
+        m_signIn->setText( i18n( "Sign in" ) );
         m_signIn->setEnabled( true );
     } else {
         m_signIn->hide();
@@ -488,28 +485,69 @@ void GroovesharkStore::polish()
         QList<int> levels;
         levels << CategoryId::Genre << CategoryId::Artist << CategoryId::Album;
 
-        m_groovesharkInfoParser = new GroovesharkInfoParser();
+        //do not allow this content to get added to the playlist. At least not for now
+        setPlayableTracks( false );
 
-        setInfoParser( m_groovesharkInfoParser );
+        GroovesharkServiceView* view = new GroovesharkServiceView( this );
+        view->setHeaderHidden( true );
+        view->setFrameShape( QFrame::NoFrame );
+        
+        // Was set true in OpmlDirectoryService, but Ii think we won't need this on true
+        view->setDragEnabled( false );
+        view->setItemsExpandable( true );
+        
+        view->setSortingEnabled( false );
+        view->setEditTriggers( QAbstractItemView::NoEditTriggers );
+        view->setDragDropMode( QAbstractItemView::NoDragDrop );
+        
+        setView( view );
 
-        debug() << "Starting strange colelctions stuff";
-        debug() << "m_collection:" << m_collection;
-        debug() << "levels:" << levels;
+        GroovesharkServiceModel *sourceModel = new GroovesharkServiceModel( manager, this );
+        
+        m_proxyModel = new GroovesharkSortFilterProxyModel( this );
+        m_proxyModel->setDynamicSortFilter( true );
+        m_proxyModel->setFilterCaseSensitivity( Qt::CaseInsensitive );
+        
+        m_proxyModel->setSourceModel( sourceModel );
+        
+        setModel( m_proxyModel );
+        
+        m_selectionModel = view->selectionModel();
+        
+//         m_subscribeButton = new QPushButton();
+//         m_subscribeButton->setParent( m_bottomPanel );
+//         m_subscribeButton->setText( i18n( "Subscribe" ) );
+//         m_subscribeButton->setObjectName( "subscribeButton" );
+//         m_subscribeButton->setIcon( KIcon( "get-hot-new-stuff-amarok" ) );
+//         
+//         m_subscribeButton->setEnabled( true );
+//         
+//         connect( m_subscribeButton, SIGNAL( clicked() ), this, SLOT( subscribe() ) );
 
-        setModel( new SingleCollectionTreeItemModel( m_collection, levels ) );
 
-        connect( m_contentView, SIGNAL( itemSelected( CollectionTreeItem * ) ), this, SLOT( itemSelected( CollectionTreeItem * ) ) );
 
-        //add a custom url runner
-        GroovesharkUrlRunner * runner = new GroovesharkUrlRunner();
-
-        connect( runner, SIGNAL( showFavorites() ), this, SLOT( showFavoritesPage() ) );
-        connect( runner, SIGNAL( showHome() ), this, SLOT( showHomePage() ) );
-        connect( runner, SIGNAL( showRecommendations() ), this, SLOT( showRecommendationsPage() ) );
-        connect( runner, SIGNAL( buyOrDownload( const QString & ) ), this, SLOT( download( const QString & ) ) );
-        connect( runner, SIGNAL( removeFromFavorites( const QString & ) ), this, SLOT( removeFromFavorites( const QString & ) ) );
-
-        The::amarokUrlHandler()->registerRunner( runner, runner->command() );
+//         m_groovesharkInfoParser = new GroovesharkInfoParser();
+// 
+//         setInfoParser( m_groovesharkInfoParser );
+// 
+//         debug() << "Starting strange colelctions stuff";
+//         debug() << "m_collection:" << m_collection;
+//         debug() << "levels:" << levels;
+// 
+//         setModel( new SingleCollectionTreeItemModel( m_collection, levels ) );
+// 
+//         connect( m_contentView, SIGNAL( itemSelected( CollectionTreeItem * ) ), this, SLOT( itemSelected( CollectionTreeItem * ) ) );
+// 
+//         //add a custom url runner
+//         GroovesharkUrlRunner * runner = new GroovesharkUrlRunner();
+// 
+//         connect( runner, SIGNAL( showFavorites() ), this, SLOT( showFavoritesPage() ) );
+//         connect( runner, SIGNAL( showHome() ), this, SLOT( showHomePage() ) );
+//         connect( runner, SIGNAL( showRecommendations() ), this, SLOT( showRecommendationsPage() ) );
+//         connect( runner, SIGNAL( buyOrDownload( const QString & ) ), this, SLOT( download( const QString & ) ) );
+//         connect( runner, SIGNAL( removeFromFavorites( const QString & ) ), this, SLOT( removeFromFavorites( const QString & ) ) );
+// 
+//         The::amarokUrlHandler()->registerRunner( runner, runner->command() );
     }
 
     const KUrl url( KStandardDirs::locate( "data", "amarok/data/" ) );
@@ -800,10 +838,10 @@ GroovesharkStore::showSignupDialog()
     config.setUsername( m_userName );
     config.save();
 
-    connect(&dlg, SIGNAL( gotUsernameAndPassword() ), SLOT( gotUsernameAndPassword() ) );
+    connect(&dlg, SIGNAL( gotUsernameAndPassword(const QString&, const QString&, bool) ), this, SLOT( gotUsernameAndPassword(const QString&, const QString&, bool) ) );
 }
 
-void GroovesharkStore::gotUsernameAndPassword() {
+void GroovesharkStore::gotUsernameAndPassword(const QString &username, const QString &password, bool keep) {
     m_signIn->hide();
     manager.startAuth();
     m_searchWidget->setVisible(true);

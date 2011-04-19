@@ -101,7 +101,7 @@ public slots:
     * Slot for catching cancelled list downloads
     */
     void onSearchEntered( const QString &message );
-    void gotUsernameAndPassword();
+    void gotUsernameAndPassword(const QString &username, const QString &password, bool keep);
 
     void loggedIn();
     void userAuthenticated();
@@ -248,6 +248,10 @@ private:
     QString m_password;
 
     int m_streamType;
+
+    QSortFilterProxyModel *m_proxyModel;
+
+    QItemSelectionModel *m_selectionModel;
 
     qulonglong m_groovesharkTimestamp;
     //ServiceSqlRegistry * m_registry;
